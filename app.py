@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 import gspread
 from oauth2client.client import GoogleCredentials
 from oauth2client.service_account import ServiceAccountCredentials
-# @st.cache
 def load_works(name):
     scope = [
         'https://spreadsheets.google.com/feeds',
@@ -48,11 +48,38 @@ def load_name():
     # get_all_values gives a list of rows.
     rows = ws.get_all_values()
     return [i[0] for i in rows]
+# @st.cache
+def load_work_frame(name):
+    scope = [
+        'https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    json_file_name = 'streamlit-practice-588d79fd6ab5.json'
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(json_file_name, scope)
+    gc = gspread.authorize(credentials)
+    spreadsheet_url = "https://docs.google.com/spreadsheets/d/1fJESPUhqvoMJH916zbY-5nkxO9GPwMJyIztDZe14yL0/edit#gid=0"
+    # 스프레스시트 문서 가져오기
+    doc = gc.open_by_url(spreadsheet_url)
+    # 시트 선택하기
+    ws = doc.worksheet(name)
+    # get_all_values gives a list of rows.
+    rows = ws.get_all_values()
+
+    # Convert to a DataFrame and render.
+    df = pd.DataFrame.from_records(rows)
+    header = df.iloc[0]
+    df = df[1:]
+
+    df = df.rename(columns=header)
+    return df
 
 name_list = load_name()
 st.title("Smartmind KPI")
 st.header("일일업무 보고")
 name= st.selectbox(label="이름", options=tuple(name_list))
+work_frame = load_work_frame(name)
+work_frame = work_frame.set_index('날짜')
+st.line_chart(work_frame)
 date = st.date_input("Date input")
 
 work_list = load_works("남상대")
