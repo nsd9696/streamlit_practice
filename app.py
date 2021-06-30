@@ -29,7 +29,10 @@ def load_works(name):
     df = df[1:]
 
     df = df.rename(columns=header)
-    return list(df[name].values)
+    df = df[[name]]
+    df = df.dropna()
+    result = [i[0] for i in df.values if len(i[0]) > 1]
+    return result
 
 def load_name():
     scope = [
@@ -82,7 +85,7 @@ work_frame = work_frame.set_index('날짜')
 st.line_chart(work_frame)
 date = st.date_input("Date input")
 
-work_list = load_works("남상대")
+work_list = load_works(name)
 work_num = int(len(work_list))
 cols = st.beta_columns(work_num)
 
